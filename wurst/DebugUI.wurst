@@ -1,0 +1,269 @@
+package DebugUI
+
+import TableLayout
+import ClosureTimers
+import FramehandleNames
+import Fx
+import ClosureEvents
+import ClosureKeyPresses
+import ClosureFrames
+import HashMap
+import LinkedList
+
+class PaletteSection
+    string header
+    LinkedList<int> idsList
+
+    construct(string header, LinkedList<int> idsList)
+        this.header = header
+        this.idsList = idsList
+
+let humanUnit = new PaletteSection("Units", asList(
+'hpea','hfoo','hgry','hgyr','hkni','hsor','hmtt','hspt',
+'hdhw','hmpr','hmtm','hrif','hbot','hbsh','hdes'))
+
+let humanHero = new PaletteSection("Heroes", asList(
+'Hpal', 'Hamg','Hmkg','Hblm', 'afac'))
+
+let humanBuildings = new PaletteSection("Buildings", asList(
+'htow','hkee','hcas','hhou','halt','hbar','hbla','hlum','harm','hars',
+'hgra','hwtw','hatw','hgtw','hctw','hshy','hvlt'))
+
+let humanSpecial = new PaletteSection("Special", asList(
+'hrtt', 'hmil','hwat','hwt2','hwt3', 'hpxe', 'hphx'
+))
+
+let orcUnit = new PaletteSection("Units", asList(
+'opeo','ogru','orai','otau','ohun','ocat','okod','owyv',
+'otbr','odoc','oshm','ospw', 'odes', 'obot'))
+
+let orcHero = new PaletteSection("Heroes", asList(
+'Obla','Ofar','Otch','Oshd'))
+
+let orcBuildings = new PaletteSection("Buildings", asList(
+'ogre','ostr','ofrt','oalt','obar','ofor','otto',
+'osld','obea','otrb','owtw','ovln', 'oshy'))
+
+let orcSpecial = new PaletteSection("Special", asList(
+'oeye', 'otot','osw1','osw2','osw3','ohwd','osp1','osp2','osp3','osp4', 'ospm', 'otbk'
+))
+
+let items = new PaletteSection("Item", asList(
+'afac', 'otot','osw1','osw2','osw3','ohwd','osp1','osp2','osp3','osp4', 'ospm', 'otbk'
+))
+
+// let nightelf = new PaletteSection("Nightelf", asList(
+// 'Edem','Edmm','Ekee','Emoo','Ewar','earc','ebal','ebsh','echm','edcm','edes',
+// 'edoc','edot','edry','edtm','efdr','efon','ehip','ehpr','emtg','esen','espv',
+// 'even','ewsp','eaoe','eaom','eaow','eate','eden','edob','edos','egol','emow',
+// 'eshy','etoa','etoe','etol','etrp'
+// ))
+
+// let undead = new PaletteSection("Undead", asList(
+// 'Ucrl', 'Udea', 'Udre', 'Ulic', 'uabo', 'uaco', 'uban', 'ubsp', 'ucrm', 'ucry',
+// 'ucs1', 'ucs2', 'ucs3', 'ucsB', 'ucsC', 'ufro', 'ugar', 'ugho', 'ugrm', 'uloc',
+// 'umtw', 'unec', 'uobs', 'uplg', 'ushd', 'uske', 'uskm', 'uubs', 'uaod', 'ubon',
+// 'ugol', 'ugrv', 'unp1', 'unp2', 'unpl', 'usap', 'usep', 'ushp', 'uslh', 'utod',
+// 'utom', 'uzg1', 'uzg2', 'uzig'
+// ))
+
+constant SECTION_TOP_SPACING = 0.0045
+constant SECTION_BOTTOM_SPACING = 0.0025
+
+@configurable constant rotationDegrees = 30
+
+class Spawner
+    vec2 mousePos
+    Fx unitFx
+    player _player
+    player owner
+    EventListener mouseEvent
+    bool isActive
+    int unitId
+
+
+class UnitSpawnerDebug
+    vec2 mousePos
+    Fx unitFx
+    player _player
+    player owner
+    EventListener mouseEvent
+    bool isActive
+    int unitId
+
+    construct(int unitId)
+        this._player = EventData.getTriggerPlayer()
+        this.unitId = unitId
+        this.owner =  EventData.getTriggerPlayer()
+        setupOsKey()
+        setupListener()
+        createUnitPreview(unitId)
+
+    function setupOsKey()
+        onKeyPress(this._player, OSKEY_1, () -> setOwner(players[0]))
+        onKeyPress(this._player, OSKEY_2, () -> setOwner(players[1]))
+        onKeyPress(this._player, OSKEY_3, () -> setOwner(players[2]))
+        onKeyPress(this._player, OSKEY_4, () -> setOwner(players[3]))
+        onKeyPress(this._player, OSKEY_5, () -> setOwner(players[4]))
+        onKeyPress(this._player, OSKEY_6, () -> setOwner(players[5]))
+        onKeyPress(this._player, OSKEY_7, () -> setOwner(players[6]))
+        onKeyPress(this._player, OSKEY_8, () -> setOwner(players[7]))
+        onKeyPress(this._player, OSKEY_9, () -> setOwner(players[8]))
+        onKeyPress(this._player, OSKEY_0, () -> setOwner(players[9]))
+
+        onKeyPress(OSKEY_1, OSKEY_META.CTRL, () -> setOwner(players[10]))
+        onKeyPress(OSKEY_2, OSKEY_META.CTRL, () -> setOwner(players[11]))
+        onKeyPress(OSKEY_3, OSKEY_META.CTRL, () -> setOwner(players[12]))
+
+        onKeyPress(this._player, OSKEY_MULTIPLY) ->
+            if this.isActive
+                this.rotateFx(rotationDegrees)
+        onKeyPress(this._player, OSKEY_DIVIDE) ->
+            if this.isActive
+                this.rotateFx(-rotationDegrees)
+
+    function setupListener()
+        EventListener.add(EVENT_PLAYER_MOUSE_MOVE) ->
+            if EventData.getTriggerPlayer() == this._player and this.isActive
+                this.mousePos = vec2(BlzGetTriggerPlayerMouseX(),
+                                     BlzGetTriggerPlayerMouseY())
+                this.unitFx.setXY(mousePos)
+
+        mouseEvent = EventListener.add(EVENT_PLAYER_MOUSE_DOWN) ->
+            if EventData.getTriggerPlayer() == this._player and this.isActive
+                if BlzGetTriggerPlayerMouseButton() == MOUSE_BUTTON_TYPE_LEFT
+                    createUnit(this.owner, this.unitId, this.mousePos, unitFx.getXYAngle())
+                else if BlzGetTriggerPlayerMouseButton() == MOUSE_BUTTON_TYPE_RIGHT
+                    this.disable()
+
+    function createUnitPreview(int unitId)
+        this.unitId = unitId
+        this.createUnitPreview()
+
+    function createUnitPreview()
+        if this.isActive
+            setFxSkin(this.unitId)
+            return
+        this.isActive = true
+        this.unitFx = new Fx(this.mousePos, 270..asAngleDegrees())
+        this.owner = this._player
+        setOwner(this.owner)
+        setFxSkin(this.unitId)
+
+    function setFxSkin(int unitId)
+        this.unitId = unitId
+        BlzSetUnitSkin(this.unitFx.getDummy(), unitId)
+
+    function setOwner(player owner)
+        if this.isActive
+            this.owner = owner
+            this.unitFx.setPlayerColor(owner.getColor())
+
+    function rotateFx(int degrees)
+        this.unitFx.setXYAngle(
+            (angle(unitFx.getXYAngle().radians() + degrees * DEGTORAD)))
+
+    function disable()
+        if this.isActive
+            this.isActive = false
+            this.unitFx.hiddenDestroy()
+
+let playerToDebugSpawner = new HashMap<player, UnitSpawnerDebug>
+
+function createUnitSpawner(int unitId, player triggerPlayer)
+    let _player = EventData.getTriggerPlayer()
+    if not playerToDebugSpawner.has(_player)
+        print("yo papa")
+        playerToDebugSpawner.put(_player, new UnitSpawnerDebug(unitId))
+    else
+        print("yo mama")
+        playerToDebugSpawner.get(_player).createUnitPreview(unitId)
+
+
+function onUnitBtnClick(int unitId)
+    //     Faire 2 Class debug item/unit
+    // Separately set up unit & item
+    createUnitSpawner(unitId, EventData.getTriggerPlayer())
+
+function TableLayout.addPaletteSection(PaletteSection content, int maxCell, boolean isUnit)
+    this.padBot(0.01)
+    this.row()
+    this.add(p(content.header))
+    this.row()
+    for elem in content.idsList
+        if content.idsList.indexOf(elem) % maxCell == 0
+            this..row()
+        this..add(imgBtn(getUnitIcon(elem))..onClick(() -> onUnitBtnClick(elem)) )
+
+function showFrame(framehandle baseFrame, string frameName)
+    for idx = 0 to baseFrame.getChildrenCount()
+        let childFrame = baseFrame.getChild(idx)
+        if childFrame.getName().startsWith("contentFrame")
+            childFrame.hide()
+        if childFrame.getName() == frameName
+            childFrame.show()
+
+init
+    doAfter(1.) ->
+        let baseFrame = createFrame("FRAME", "baseFrame", GAME_UI, "", 0)
+        ..setAbsPoint(FRAMEPOINT_TOP, vec2(0.6, 0.515))
+        ..setSize(0.3, 0.35)
+
+        let headerFrame = createFrame("FRAME", "headerFrame", baseFrame, "", 0)
+        ..setAbsPoint(FRAMEPOINT_TOP, vec2(0.6, 0.515))
+        ..setSize(0.3, 0.07)
+        ..hide()
+        ..show(Player(0))
+
+        let contentFrameHuman = createFrame("FRAME", "contentFrameHuman", baseFrame, "", 0)
+        ..setAbsPoint(FRAMEPOINT_TOP, vec2(0.6, 0.475))
+        ..setSize(0.3, 0.28)
+        ..hide()
+        ..show(Player(0))
+
+        let contentFrameOrc = createFrame("FRAME", "contentFrameOrc", baseFrame, "", 0)
+        ..setAbsPoint(FRAMEPOINT_TOP, vec2(0.6, 0.475))
+        ..setSize(0.3, 0.28)
+        ..hide()
+
+        let contentFrameItem = createFrame("FRAME", "contentFrameItem", baseFrame, "", 0)
+        ..setAbsPoint(FRAMEPOINT_TOP, vec2(0.6, 0.475))
+        ..setSize(0.3, 0.28)
+        ..hide()
+
+        // Used just for the back drop texture
+        createFrame("HeroPickMenuBackdrop", baseFrame, 0, 0)..setAllPoints(baseFrame)
+
+
+
+        new TableLayout(0.3, 0.07)
+        ..row()
+        ..add(btn("Human")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, "contentFrameHuman") ))
+        ..add(btn("Orc")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, "contentFrameOrc") ))
+        ..add(btn("Undead")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, "contentFrameItem") ))
+        ..add(btn("NightElf")..setWidth(0.06))
+        ..applyTo(headerFrame)
+
+        new TableLayout(0.3, 0.28)
+        ..addPaletteSection(humanHero, 8, true)
+        ..addPaletteSection(humanUnit, 8, true)
+        ..addPaletteSection(humanBuildings, 8, true)
+        ..addPaletteSection(humanSpecial, 8, true)
+        .applyTo(contentFrameHuman)
+
+        new TableLayout(0.3, 0.28)
+        ..addPaletteSection(orcHero, 8, true)
+        ..addPaletteSection(orcUnit, 8, true)
+        ..addPaletteSection(orcBuildings, 8, true)
+        ..addPaletteSection(orcSpecial, 8, true)
+        ..applyTo(contentFrameOrc)
+
+        new TableLayout(0.3, 0.28)
+        ..addPaletteSection(items, 8, false)
+        ..applyTo(contentFrameItem)
+
+
+                            // .createFrame()..hide()..setAbsPoint(FRAMEPOINT_TOP, vec2(0.6, 0.485))
+        // framehandle orcPage      = new TableLayout(0.3, 0.28)..addPaletteSection(orc, 8).createFrame()..hide()
+        // framehandle nightelfPage = new TableLayout(0.3, 0.28)..addPaletteSection(nightelf, 8).createFrame()..hide()
+        // framehandle undeadPage   = new TableLayout(0.3, 0.28)..addPaletteSection(undead, 8).createFrame()..hide()
