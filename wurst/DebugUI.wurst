@@ -9,6 +9,14 @@ import ClosureKeyPresses
 import ClosureFrames
 import HashMap
 import LinkedList
+import ItemObjEditing
+import ObjectPreview
+import ItemIds
+
+
+enum debugTypes
+    UNIT
+    ITEM
 
 class PaletteSection
     string header
@@ -48,10 +56,6 @@ let orcSpecial = new PaletteSection("Special", asList(
 'oeye', 'otot','osw1','osw2','osw3','ohwd','osp1','osp2','osp3','osp4', 'ospm', 'otbk'
 ))
 
-let items = new PaletteSection("Item", asList(
-'afac', 'otot','osw1','osw2','osw3','ohwd','osp1','osp2','osp3','osp4', 'ospm', 'otbk'
-))
-
 // let nightelf = new PaletteSection("Nightelf", asList(
 // 'Edem','Edmm','Ekee','Emoo','Ewar','earc','ebal','ebsh','echm','edcm','edes',
 // 'edoc','edot','edry','edtm','efdr','efon','ehip','ehpr','emtg','esen','espv',
@@ -67,37 +71,95 @@ let items = new PaletteSection("Item", asList(
 // 'utom', 'uzg1', 'uzg2', 'uzig'
 // ))
 
+let artifact = new PaletteSection("Artifact", asList('ckng','desc','modt','ofro','ratf','tkno'))
+
+let campaign = new PaletteSection("Campaign", asList('azhr','bzbe','bzbf','ches','cnhn','dkfw',
+                      'dphe','dthb','engs','glsk','gmfr','gopr',
+                    //   'jpnt','k3m1','k3m2','k3m3','ktrm','kybl',
+                    //   'kygh','kymn','kysn','ledg','mgtk','mort',
+                    //   'phlt','sclp','sehr','shwd','skrt','sorf',
+                      'thle','wolg','wtlg'
+                      ))
+
+let charged = new PaletteSection("Charged", asList('ankh','fgdg','fgfh','fgrd','fgrg','fgsk',
+                    //  'hlst','infs','mnst','pdiv','pghe','pgma',
+                    //  'pnvu','pomn','pres','rej3','sand','shar',
+                    //  'sres','sror','srrc','totw','wcyc','whwd',
+                     'wild','will','wlsd','woms','wshs','wswd'
+                     ))
+
+let miscellaneous = new PaletteSection("Miscellaneous", asList('amrc','anfg','arsc','arsh','asbl',
+                           'axas','bfhr','blba','brag','btst',
+                        //    'ccmd','cosl','crdt','drph','dtsb',
+                        //    'dust','envl','esaz','fgun','flag',
+                        //    'frgd','frhg','fwss','gemt','gldo',
+                        //    'gobm','grsl','gsou','gvsm','hbth',
+                        //    'horl','iwbr','jdrn','kgal','klmm',
+                        //    'lnrn','lure','mlst','mnsf','nflg',
+                        //    'nspi','ocor','ofir','oflg','ofr2',
+                        //    'oli2','olig','oslo','oven','pams',
+                        //    'pgin','pspd','ram1','ram2','ram3',
+                        //    'ram4','rat3','rde0','rde1','rej1',
+                        //    'rej2','rej4','rej5','rej6','rnsp',
+                        //    'rots','rugt','rump','sbok','schl',
+                        //    'scul','sfog','shcw','shdt','shen',
+                        //    'shhn','shrs','shtm','sksh','sor1',
+                        //    'sor2','sor3','sor4','sor5','sor6',
+                        //    'sor7','sor8','sor9','sora','soul',
+                        //    'spre','sprn','srbd','srtl','stpg',
+                        //    'stre','stwa','tbak','tbar','tbsm',
+                        //    'tels','tfar','tgxp','thdm','tlum',
+                           'tmmt','tmsc','uflg','vddl','ward'
+                           ))
+
+let permanent = new PaletteSection("Permanent", asList('afac','ajen','belv','bgst','brac','bspd',
+                       'ciri','clfm','clsd','cnob','crys','dsum',
+                    //    'evtl','gcel','hcun','hval','kpin','lgdh',
+                    //    'lhst','mcou','odef','penr','pmna','prvt',
+                    //    'rag1','rat6','rat9','ratc','rde2','rde3',
+                    //    'rde4','rhth','rin1','rlif','rst1','rwiz',
+                       'sbch','spsh','ssil','stel','war2'
+                       ))
+
+let powerup = new PaletteSection("Powerup", asList('gfor','gold','gomn','guvi','lmbr','manh',
+                     'rdis','rhe1','rhe2','rhe3','rma2','rman',
+                    //  'rre1','rre2','rreb','rres','rspd','rspl',
+                    //  'rsps','rwat','tdex','tdx2','texp','tin2',
+                     'tint','tpow','tst2','tstr'
+                     ))
+
+let purchasable = new PaletteSection("Purchasable", asList('hslv','mcri','moon','pclr','phea','pinv',
+                         'plcl','pman','pnvl','ritd','rnec','shas',
+                        //  'shea','silk','skul','sman','sneg','spro',
+                        //  'sreg','ssan','stwp','tcas','tgrh','tret',
+                         'tsct','vamp','wneg','wneu'
+                         ))
+
+
 constant SECTION_TOP_SPACING = 0.0045
 constant SECTION_BOTTOM_SPACING = 0.0025
 
 @configurable constant rotationDegrees = 30
 
-class Spawner
+class ObjectSpawnerDebug
     vec2 mousePos
+    DummyFx debugPreviewFx
     Fx unitFx
+    ItemFx itemFx
     player _player
     player owner
     EventListener mouseEvent
     bool isActive
-    int unitId
+    debugTypes debugType
 
 
-class UnitSpawnerDebug
-    vec2 mousePos
-    Fx unitFx
-    player _player
-    player owner
-    EventListener mouseEvent
-    bool isActive
-    int unitId
-
-    construct(int unitId)
+    construct(int objectId, debugTypes debugType)
         this._player = EventData.getTriggerPlayer()
-        this.unitId = unitId
         this.owner =  EventData.getTriggerPlayer()
+        this.debugType = debugType
         setupOsKey()
         setupListener()
-        createUnitPreview(unitId)
+        createObjectPreview(objectId, debugType)
 
     function setupOsKey()
         onKeyPress(this._player, OSKEY_1, () -> setOwner(players[0]))
@@ -127,65 +189,53 @@ class UnitSpawnerDebug
             if EventData.getTriggerPlayer() == this._player and this.isActive
                 this.mousePos = vec2(BlzGetTriggerPlayerMouseX(),
                                      BlzGetTriggerPlayerMouseY())
-                this.unitFx.setXY(mousePos)
+                this.debugPreviewFx.setXY(this.mousePos)
 
         mouseEvent = EventListener.add(EVENT_PLAYER_MOUSE_DOWN) ->
             if EventData.getTriggerPlayer() == this._player and this.isActive
                 if BlzGetTriggerPlayerMouseButton() == MOUSE_BUTTON_TYPE_LEFT
-                    createUnit(this.owner, this.unitId, this.mousePos, unitFx.getXYAngle())
+                    this.debugPreviewFx.spawnObject()
                 else if BlzGetTriggerPlayerMouseButton() == MOUSE_BUTTON_TYPE_RIGHT
                     this.disable()
 
-    function createUnitPreview(int unitId)
-        this.unitId = unitId
-        this.createUnitPreview()
-
-    function createUnitPreview()
+    function createObjectPreview(int objectId, debugTypes debugType)
+        this.debugType = debugType
         if this.isActive
-            setFxSkin(this.unitId)
+            this.debugPreviewFx.setFxSkin(objectId)
             return
         this.isActive = true
-        this.unitFx = new Fx(this.mousePos, 270..asAngleDegrees())
         this.owner = this._player
-        setOwner(this.owner)
-        setFxSkin(this.unitId)
-
-    function setFxSkin(int unitId)
-        this.unitId = unitId
-        BlzSetUnitSkin(this.unitFx.getDummy(), unitId)
+        switch this.debugType
+            case UNIT
+                debugPreviewFx = new UnitFx(this.mousePos, objectId, this._player, 270..asAngleDegrees())
+            case ITEM
+                debugPreviewFx = new ItemFx(this.mousePos, objectId, this._player)
 
     function setOwner(player owner)
         if this.isActive
             this.owner = owner
-            this.unitFx.setPlayerColor(owner.getColor())
+            this.debugPreviewFx.setOwner(owner)
 
     function rotateFx(int degrees)
-        this.unitFx.setXYAngle(
+        this.debugPreviewFx.setXYAngle(
             (angle(unitFx.getXYAngle().radians() + degrees * DEGTORAD)))
 
     function disable()
         if this.isActive
             this.isActive = false
-            this.unitFx.hiddenDestroy()
+            this.debugPreviewFx.hiddenDestroy()
 
-let playerToDebugSpawner = new HashMap<player, UnitSpawnerDebug>
 
-function createUnitSpawner(int unitId, player triggerPlayer)
+let playerToDebugSpawner = new HashMap<player, ObjectSpawnerDebug>
+
+function createObjectSpawner(int objectId, debugTypes debugType)
     let _player = EventData.getTriggerPlayer()
     if not playerToDebugSpawner.has(_player)
-        print("yo papa")
-        playerToDebugSpawner.put(_player, new UnitSpawnerDebug(unitId))
+        playerToDebugSpawner.put(_player, new ObjectSpawnerDebug(objectId, debugType))
     else
-        print("yo mama")
-        playerToDebugSpawner.get(_player).createUnitPreview(unitId)
+        playerToDebugSpawner.get(_player).createObjectPreview(objectId, debugType)
 
-
-function onUnitBtnClick(int unitId)
-    //     Faire 2 Class debug item/unit
-    // Separately set up unit & item
-    createUnitSpawner(unitId, EventData.getTriggerPlayer())
-
-function TableLayout.addPaletteSection(PaletteSection content, int maxCell, boolean isUnit)
+function TableLayout.addPaletteSection(PaletteSection content, int maxCell, debugTypes dt)
     this.padBot(0.01)
     this.row()
     this.add(p(content.header))
@@ -193,7 +243,7 @@ function TableLayout.addPaletteSection(PaletteSection content, int maxCell, bool
     for elem in content.idsList
         if content.idsList.indexOf(elem) % maxCell == 0
             this..row()
-        this..add(imgBtn(getUnitIcon(elem))..onClick(() -> onUnitBtnClick(elem)) )
+        this..add(imgBtn(getUnitIcon(elem))..onClick(() -> createObjectSpawner(elem, dt)) )
 
 function showFrame(framehandle baseFrame, string frameName)
     for idx = 0 to baseFrame.getChildrenCount()
@@ -240,26 +290,33 @@ init
         ..row()
         ..add(btn("Human")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, "contentFrameHuman") ))
         ..add(btn("Orc")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, "contentFrameOrc") ))
-        ..add(btn("Undead")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, "contentFrameItem") ))
-        ..add(btn("NightElf")..setWidth(0.06))
+        // ..add(btn("Undead")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, "contentFrameItem") ))
+        // ..add(btn("NightElf")..setWidth(0.06))
+        ..add(btn("Items")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, "contentFrameItem") ))
         ..applyTo(headerFrame)
 
         new TableLayout(0.3, 0.28)
-        ..addPaletteSection(humanHero, 8, true)
-        ..addPaletteSection(humanUnit, 8, true)
-        ..addPaletteSection(humanBuildings, 8, true)
-        ..addPaletteSection(humanSpecial, 8, true)
+        ..addPaletteSection(humanHero, 8, debugTypes.UNIT)
+        ..addPaletteSection(humanUnit, 8, debugTypes.UNIT)
+        ..addPaletteSection(humanBuildings, 8, debugTypes.UNIT)
+        ..addPaletteSection(humanSpecial, 8, debugTypes.UNIT)
         .applyTo(contentFrameHuman)
 
         new TableLayout(0.3, 0.28)
-        ..addPaletteSection(orcHero, 8, true)
-        ..addPaletteSection(orcUnit, 8, true)
-        ..addPaletteSection(orcBuildings, 8, true)
-        ..addPaletteSection(orcSpecial, 8, true)
+        ..addPaletteSection(orcHero, 8, debugTypes.UNIT)
+        ..addPaletteSection(orcUnit, 8, debugTypes.UNIT)
+        ..addPaletteSection(orcBuildings, 8, debugTypes.UNIT)
+        ..addPaletteSection(orcSpecial, 8, debugTypes.UNIT)
         ..applyTo(contentFrameOrc)
 
         new TableLayout(0.3, 0.28)
-        ..addPaletteSection(items, 8, false)
+        ..addPaletteSection(artifact, 8, debugTypes.ITEM)
+        // ..addPaletteSection(campaign, 8, debugTypes.ITEM)
+        // ..addPaletteSection(charged, 8, debugTypes.ITEM)
+        ..addPaletteSection(miscellaneous, 8, debugTypes.ITEM)
+        ..addPaletteSection(permanent, 8, debugTypes.ITEM)
+        ..addPaletteSection(powerup, 8, debugTypes.ITEM)
+        // ..addPaletteSection(purchasable, 8, debugTypes.ITEM)
         ..applyTo(contentFrameItem)
 
 
