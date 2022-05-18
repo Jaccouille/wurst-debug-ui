@@ -1,0 +1,9 @@
+/_build
+wurst.dependencies
+/.vscode
+/temp
+/backups
+# Other map files
+/*.w3x
+compiled-maps/*
+compiled.j.txt
