@@ -24,17 +24,6 @@ let nightElfBuildings = new PaletteSection("Buildings"     , nightElfBuildingsLi
 let nightElfSpecial   = new PaletteSection("Special"       , nightElfSpecialList)
 let artifact          = new PaletteSection("Artifact"      , artifactList)
 let campaign          = new PaletteSection("Campaign"      , campaignList)
-let charged           = new PaletteSection("Charged"       , chargedList)
-let miscellaneous     = new PaletteSection("Miscellaneous" , miscellaneousList)
-let miscellaneous2    = new PaletteSection("Miscellaneous" , miscellaneousList2)
-let permanent         = new PaletteSection("Permanent"     , permanentList)
-let powerup           = new PaletteSection("Powerup"       , powerUpList)
-let purchasable       = new PaletteSection("Purchasable"   , purchasableList)
-let humanUpgrades     = new PaletteSection("Human"         , humanUpgradesList)
-let orcUpgrades       = new PaletteSection("Orc"           , orcUpgradesList)
-let undeadUpgrades    = new PaletteSection("Undead"        , undeadUpgradesList)
-let nightElfUpgrades  = new PaletteSection("Night Elf"     , nightElfUpgradesList)
-let specialUpgrades   = new PaletteSection("Special"       , specialUpgradesList)
 
 class PaletteSection
     string header
@@ -49,6 +38,7 @@ constant SECTION_TOP_SPACING = 0.0045
 constant SECTION_BOTTOM_SPACING = 0.0025
 constant FRAME_SIZE = vec2(0.3, 0.28)
 constant MAX_CELL = 10
+constant CONTENT_FRAME_SIZE = vec2(0.005, -0.08)
 
 
 function TableLayout.addPaletteSection(PaletteSection content, int maxCell, debugTypes dt)
@@ -62,7 +52,6 @@ function TableLayout.addPaletteSection(PaletteSection content, int maxCell, debu
         let btnFrame = imgBtn(BlzGetAbilityIcon(elem))
         createToolTipFrame(elem, btnFrame)
         btnFrame.onClick(() -> createObjectSpawner(elem, dt))
-
         this.add(btnFrame)
 
 
@@ -85,12 +74,6 @@ function createFrameTemplate(string name, vec2 size, vec2 pos, framehandle paren
             ..setSize(size.x, size.y)
             ..hide()
 
-function createContentFrames(int frameNbr, string namePrefix, vec2 size, vec2 pos, framehandle parent) returns LinkedList<framehandle>
-    let newList = new LinkedList<framehandle>
-    for i = 1 to frameNbr
-        newList.push(createFrameTemplate(namePrefix + i.toString(), size, pos, parent))
-    return newList
-
 function showFrame(framehandle baseFrame, string frameName)
     for idx = 0 to baseFrame.getChildrenCount()
         let childFrame = baseFrame.getChild(idx)
@@ -98,8 +81,6 @@ function showFrame(framehandle baseFrame, string frameName)
             childFrame.hide()
         if childFrame.getName() == frameName
             childFrame.show()
-
-let contentFrames = new LinkedList<framehandle>
 
 
 init
@@ -110,7 +91,6 @@ init
             ..setAbsPoint(FRAMEPOINT_TOP, vec2(0.6, 0.545))
             ..setSize(0.3, 0.38)
 
-        // Used just for the back drop texture
         createFrame("HeroPickMenuBackdrop", baseFrame, 0, 0)
             ..setAllPoints(baseFrame)
 
@@ -119,124 +99,57 @@ init
             ..setSize(0.3, 0.07)
             ..show()
 
-        // Items frame page stored in a list
-        let itemPageList = createContentFrames(5, "contentFrameItem", FRAME_SIZE, vec2(0.005, -0.08), baseFrame)
-        let upgradePageList = createContentFrames(4, "contentFrameUpgrade", FRAME_SIZE, vec2(0.005, -0.08), baseFrame)
-
-        let btnNext = createFrame("button", baseFrame, 0, 0)
-            ..setText(">")
-            ..setSize(0.025, 0.025)
-            ..setPoint(FRAMEPOINT_BOTTOM, baseFrame, FRAMEPOINT_BOTTOM, vec2(0., 0.008))
-
-        let btnPrev = createFrame("button", baseFrame, 0, 0)
-            ..setText("<")
-            ..setSize(0.025, 0.025)
-            ..setPoint(FRAMEPOINT_RIGHT, btnNext, FRAMEPOINT_LEFT)
-
-        var itNext = itemPageList.iterator()..next()
-        btnNext..onClick() ->
-            if itNext.hasNext() and itNext.current.elem.isVisible()
-                let frameName = itNext.next().getName()
-                showFrame(baseFrame, frameName)
-
-        btnPrev..onClick() ->
-            if itNext.hasPrev() and itNext.current.elem.isVisible()
-                let frameName = itNext.prev().getName()
-                showFrame(baseFrame, frameName)
-
-        let itemHeaderBtn = btn("Items")..setWidth(0.06)
-        itemHeaderBtn.onClick() ->
-            itNext.close()
-            itNext = itemPageList.iterator()..next()
-            showFrame(baseFrame, itemPageList.get(0).getName())
-
-        let upgradeHeaderBtn = btn("Upgrades")..setWidth(0.08)
-        upgradeHeaderBtn.onClick() ->
-            itNext.close()
-            itNext = upgradePageList.iterator()..next()
-            showFrame(baseFrame, upgradePageList.get(0).getName())
-
-        contentFrames
-            ..add(createFrameTemplate("contentFrameHuman"   , FRAME_SIZE, vec2(0.005, -0.08), baseFrame))
-            ..add(createFrameTemplate("contentFrameOrc"     , FRAME_SIZE, vec2(0.005, -0.08), baseFrame))
-            ..add(createFrameTemplate("contentFrameUndead"  , FRAME_SIZE, vec2(0.005, -0.08), baseFrame))
-            ..add(createFrameTemplate("contentFrameNightElf", FRAME_SIZE, vec2(0.005, -0.08), baseFrame))
+        let contentFrames = new LinkedList<framehandle>
+            ..add(createFrameTemplate("contentFrameHuman"    , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
+            ..add(createFrameTemplate("contentFrameOrc"      , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
+            ..add(createFrameTemplate("contentFrameUndead"   , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
+            ..add(createFrameTemplate("contentFrameNightElf" , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
+            ..add(createFrameTemplate("contentFrameItem"     , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
 
         new TableLayout(0.3, 0.07)
-        ..row()
-        ..add(btn("Human")   ..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(0).getName()) ) )
-        ..add(btn("Orc")     ..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(1).getName()) ) )
-        ..add(btn("Undead")  ..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(2).getName()) ) )
-        ..add(btn("NightElf")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(3).getName()) ) )
-        ..row()
-        ..add(itemHeaderBtn)
-        ..add(upgradeHeaderBtn)
-        ..applyTo(headerFrame)
+            ..row()
+            ..add(btn("Human")   ..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(0).getName()) ) )
+            ..add(btn("Orc")     ..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(1).getName()) ) )
+            ..add(btn("Undead")  ..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(2).getName()) ) )
+            ..add(btn("NightElf")..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(3).getName()) ) )
+            ..row()
+            ..add(btn("Items")   ..setWidth(0.06)..onClick(() -> showFrame(baseFrame, contentFrames.get(4).getName()) ) )
+            ..applyTo(headerFrame)
 
         // Human Frame
         new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(humanHero     , MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(humanUnit     , MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(humanBuildings, MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(humanSpecial  , MAX_CELL, debugTypes.UNIT)
-        ..applyTo(contentFrames.get(0))
+            ..addPaletteSection(humanHero     , MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(humanUnit     , MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(humanBuildings, MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(humanSpecial  , MAX_CELL, debugTypes.UNIT)
+            ..applyTo(contentFrames.get(0))
 
         // Orc Frame
         new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(orcHero     , MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(orcUnit     , MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(orcBuildings, MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(orcSpecial  , MAX_CELL, debugTypes.UNIT)
-        ..applyTo(contentFrames.get(1))
+            ..addPaletteSection(orcHero     , MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(orcUnit     , MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(orcBuildings, MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(orcSpecial  , MAX_CELL, debugTypes.UNIT)
+            ..applyTo(contentFrames.get(1))
 
         // Undead Frame
         new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(undeadHero     , MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(undeadUnit     , MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(undeadBuildings, MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(undeadSpecial  , MAX_CELL, debugTypes.UNIT)
-        ..applyTo(contentFrames.get(2))
+            ..addPaletteSection(undeadHero     , MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(undeadUnit     , MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(undeadBuildings, MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(undeadSpecial  , MAX_CELL, debugTypes.UNIT)
+            ..applyTo(contentFrames.get(2))
 
         // NightElf Frame
         new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(nightElfHero     , MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(nightElfUnit     , MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(nightElfBuildings, MAX_CELL, debugTypes.UNIT)
-        ..addPaletteSection(nightElfSpecial  , MAX_CELL, debugTypes.UNIT)
-        ..applyTo(contentFrames.get(3))
+            ..addPaletteSection(nightElfHero     , MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(nightElfUnit     , MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(nightElfBuildings, MAX_CELL, debugTypes.UNIT)
+            ..addPaletteSection(nightElfSpecial  , MAX_CELL, debugTypes.UNIT)
+            ..applyTo(contentFrames.get(3))
 
         // Items Frame
         new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(artifact, MAX_CELL, debugTypes.ITEM)
-        ..addPaletteSection(campaign, MAX_CELL, debugTypes.ITEM)
-        ..applyTo(itemPageList.get(0))
-
-        new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(miscellaneous, MAX_CELL, debugTypes.ITEM)
-        ..applyTo(itemPageList.get(1))
-
-        new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(miscellaneous2, MAX_CELL, debugTypes.ITEM)
-        ..applyTo(itemPageList.get(2))
-
-        new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(charged  , MAX_CELL, debugTypes.ITEM)
-        ..addPaletteSection(permanent, MAX_CELL, debugTypes.ITEM)
-        ..applyTo(itemPageList.get(3))
-
-        new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(powerup    , MAX_CELL, debugTypes.ITEM)
-        ..addPaletteSection(purchasable, MAX_CELL, debugTypes.ITEM)
-        ..applyTo(itemPageList.get(4))
-
-        // Upgrades Frame
-        new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(humanUpgrades, MAX_CELL, debugTypes.ITEM)
-        ..addPaletteSection(orcUpgrades, MAX_CELL, debugTypes.ITEM)
-        ..addPaletteSection(undeadUpgrades, MAX_CELL, debugTypes.ITEM)
-        ..applyTo(upgradePageList.get(0))
-
-        new TableLayout(FRAME_SIZE.x, FRAME_SIZE.y)
-        ..addPaletteSection(nightElfUpgrades  , MAX_CELL, debugTypes.ITEM)
-        ..addPaletteSection(specialUpgrades, MAX_CELL, debugTypes.ITEM)
-        ..applyTo(upgradePageList.get(1))
+            ..addPaletteSection(artifact, MAX_CELL, debugTypes.ITEM)
+            ..addPaletteSection(campaign, MAX_CELL, debugTypes.ITEM)
+            ..applyTo(contentFrames.get(4))
