@@ -6,6 +6,9 @@ It features an object previewer class used to place Warcraft 3 game objects
 The goal is to make the debugging phase more comfortable by spawning objects
 through mouse click rather than type debugging commands.
 
+![22-05-21-20-28-45](https://user-images.githubusercontent.com/7768858/169666522-920610ea-5330-43c0-80d9-07f9a9302875.gif)
+
+
 ## Installation
 Add this repository to your wurst dependencies by adding this line in your wurst.build file under `dependencies` section
 
