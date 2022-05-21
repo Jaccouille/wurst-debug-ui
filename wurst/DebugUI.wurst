@@ -94,6 +94,20 @@ init
         createFrame("HeroPickMenuBackdrop", baseFrame, 0, 0)
             ..setAllPoints(baseFrame)
 
+        createFrame("ScriptDialogButton", GAME_UI, 0, 0)
+        ..setSize(0.12, 0.025)
+        ..setPoint(FRAMEPOINT_TOPRIGHT, baseFrame, FRAMEPOINT_TOPRIGHT, 0.0, 0.02)
+        ..onClick() ->
+            if baseFrame.isVisible()
+                baseFrame.hide()
+            else
+                baseFrame.show()
+
+        getFrame("ScriptDialogButtonText", 0)
+        ..setText("Debug Tool")
+
+
+
         let headerFrame = createFrame("FRAME", "headerFrame", baseFrame, "", 0)
             ..setPoint(FRAMEPOINT_TOP, baseFrame, FRAMEPOINT_TOP)
             ..setSize(0.3, 0.07)
