@@ -25,6 +25,16 @@ let nightElfSpecial   = new PaletteSection("Special"       , nightElfSpecialList
 let artifact          = new PaletteSection("Artifact"      , artifactList)
 let campaign          = new PaletteSection("Campaign"      , campaignList)
 
+let DOC_TEXT = "" +
+"Click to show/hide the debug panel.\n"+
+"This is a panel emulating the world editor Unit/Item window palette.\n"+
+"You can select objects and place them on the terrain.\n\n"+
+"Hotkeys\n".color(color(255,  99,  71))+
+"Following hotkeys are similar to those from the editor.\n"+
+"Press 0 to 9 to change the unit owner (Player 1, 2 3...).\n"+
+"Press * to rotate the unit/item angle.\n"+
+"Press + or - to increase/decrease the amount of object to spawn."
+
 class PaletteSection
     string header
     LinkedList<int> idsList
@@ -50,23 +60,23 @@ function TableLayout.addPaletteSection(PaletteSection content, int maxCell, debu
         if content.idsList.indexOf(elem) % maxCell == 0
             this..row()
         let btnFrame = imgBtn(BlzGetAbilityIcon(elem))
-        createToolTipFrame(elem, btnFrame)
+        btnFrame.createToolTipFrame(GetAbilityName(elem), BlzGetAbilityExtendedTooltip(elem, 1))
         btnFrame.onClick(() -> createObjectSpawner(elem, dt))
         this.add(btnFrame)
 
 
-function createToolTipFrame(int id, framehandle parent)
+function framehandle.createToolTipFrame(string title, string textContent)
     let tooltip = createFrame("BoxedText", GAME_UI, 0, 0)
     let text = getFrame("BoxedTextValue")
 
-    getFrame("BoxedTextTitle").setText(GetAbilityName(id))
+    getFrame("BoxedTextTitle").setText(title)
 
-    text..setText(BlzGetAbilityExtendedTooltip(id, 1))
+    text..setText(textContent)
         ..setSize(0.3, 0)
-        ..setPoint(FRAMEPOINT_TOPRIGHT, parent, FRAMEPOINT_TOPLEFT, -0.001, -0.052)
+        ..setPoint(FRAMEPOINT_TOPRIGHT, this, FRAMEPOINT_TOPLEFT, -0.001, -0.052)
     tooltip.setPoint(FRAMEPOINT_TOPLEFT, text, FRAMEPOINT_TOPLEFT, -0.01, 0.01)
     tooltip.setPoint(FRAMEPOINT_BOTTOMRIGHT, text, FRAMEPOINT_BOTTOMRIGHT, 0.01, -0.023)
-    parent.setTooltip(tooltip)
+    this.setTooltip(tooltip)
 
 function createFrameTemplate(string name, vec2 size, vec2 pos, framehandle parent) returns framehandle
     return createFrame("FRAME", name, parent, "", 0)
@@ -96,6 +106,7 @@ init
 
         createFrame("ScriptDialogButton", GAME_UI, 0, 0)
         ..setSize(0.12, 0.025)
+        ..createToolTipFrame("Documentation", DOC_TEXT)
         ..setPoint(FRAMEPOINT_TOPRIGHT, baseFrame, FRAMEPOINT_TOPRIGHT, 0.0, 0.02)
         ..onClick() ->
             if baseFrame.isVisible()
@@ -104,8 +115,7 @@ init
                 baseFrame.show()
 
         getFrame("ScriptDialogButtonText", 0)
-        ..setText("Debug Tool")
-
+            ..setText("Debug Panel")
 
 
         let headerFrame = createFrame("FRAME", "headerFrame", baseFrame, "", 0)
@@ -114,7 +124,7 @@ init
             ..show()
 
         let contentFrames = new LinkedList<framehandle>
-            ..add(createFrameTemplate("contentFrameHuman"    , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
+            ..add(createFrameTemplate("contentFrameHuman"    , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame)..show())
             ..add(createFrameTemplate("contentFrameOrc"      , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
             ..add(createFrameTemplate("contentFrameUndead"   , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
             ..add(createFrameTemplate("contentFrameNightElf" , FRAME_SIZE, CONTENT_FRAME_SIZE, baseFrame))
