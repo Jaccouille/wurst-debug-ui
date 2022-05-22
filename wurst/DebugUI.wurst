@@ -75,7 +75,7 @@ function framehandle.createToolTipFrame(string title, string textContent)
         ..setSize(0.3, 0)
         ..setPoint(FRAMEPOINT_TOPRIGHT, this, FRAMEPOINT_TOPLEFT, -0.001, -0.052)
     tooltip.setPoint(FRAMEPOINT_TOPLEFT, text, FRAMEPOINT_TOPLEFT, -0.01, 0.01)
-    tooltip.setPoint(FRAMEPOINT_BOTTOMRIGHT, text, FRAMEPOINT_BOTTOMRIGHT, 0.01, -0.023)
+    tooltip.setPoint(FRAMEPOINT_BOTTOMRIGHT, text, FRAMEPOINT_BOTTOMRIGHT, 0.01, -0.025)
     this.setTooltip(tooltip)
 
 function createFrameTemplate(string name, vec2 size, vec2 pos, framehandle parent) returns framehandle
@@ -107,7 +107,7 @@ init
         createFrame("ScriptDialogButton", GAME_UI, 0, 0)
         ..setSize(0.12, 0.025)
         ..createToolTipFrame("Documentation", DOC_TEXT)
-        ..setPoint(FRAMEPOINT_TOPRIGHT, baseFrame, FRAMEPOINT_TOPRIGHT, 0.0, 0.02)
+        ..setPoint(FRAMEPOINT_TOP, baseFrame, FRAMEPOINT_TOP, 0.0, 0.02)
         ..onClick() ->
             if baseFrame.isVisible()
                 baseFrame.hide()
